@@ -45,10 +45,12 @@ class SpatieMediaLibraryImageEntry extends ImageEntry
             return null;
         }
 
-        $relationshipName = $this->getRelationshipName();
+        if ($this->hasRelationship($record)) {
+            $record = $record->getRelationValue($this->getRelationshipName());
+        }
 
-        if (filled($relationshipName)) {
-            $record = $record->getRelationValue($relationshipName);
+        if (! $record) {
+            return null;
         }
 
         /** @var ?Media $media */
@@ -81,10 +83,16 @@ class SpatieMediaLibraryImageEntry extends ImageEntry
     {
         $collection = $this->getCollection();
 
-        return $this->getRecord()->getRelationValue('media')
+        $record = $this->getRecord();
+
+        if ($this->hasRelationship($record)) {
+            $record = $record->getRelationValue($this->getRelationshipName());
+        }
+
+        return $record?->getRelationValue('media')
             ->filter(fn (Media $media): bool => blank($collection) || ($media->getAttributeValue('collection_name') === $collection))
             ->sortBy('order_column')
             ->map(fn (Media $media): string => $media->uuid)
-            ->all();
+            ->all() ?? [];
     }
 }
